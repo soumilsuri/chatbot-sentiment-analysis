@@ -119,12 +119,20 @@ class ConversationSummarizer:
             for msg in conversation_history
         ])
         
-        prompt = f"""Please provide a brief summary of the following conversation. Focus on the main topics discussed and the user's concerns or interests.
+        prompt = f"""Please analyze the following conversation and provide:
+1. A concise summary of the main topics and user sentiment.
+2. Actionable suggestions or next steps for the user based on the conversation.
 
 Conversation:
 {conversation_text}
 
-Summary:"""
+Output Format:
+**Summary:** [Your summary here]
+
+**Suggestions:**
+- [Suggestion 1]
+- [Suggestion 2]
+..."""
         
         try:
             summary = self.chatbot.get_response(prompt, [])

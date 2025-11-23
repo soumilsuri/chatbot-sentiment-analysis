@@ -19,6 +19,7 @@ from src.summary import ConversationSummarizer
 from src.export import ConversationExporter
 from src.alerts import SentimentAlertManager
 from src.utils import load_environment_variables
+from src.test_scenarios import TEST_SCENARIOS
 
 st.set_page_config(
     page_title="Chatbot with Sentiment Analysis",
@@ -168,6 +169,39 @@ def main():
                 else:
                     st.info("No saved sessions found")
         
+        st.markdown("---")
+        
+        st.subheader("🧪 Test Zone")
+        scenario_names = list(TEST_SCENARIOS.keys())
+        selected_scenario = st.selectbox("Select Scenario", scenario_names)
+        
+        if st.button("▶️ Run Scenario", width='stretch'):
+            scenario = TEST_SCENARIOS[selected_scenario]
+            
+            # Reset state
+            st.session_state.conversation.clear()
+            st.session_state.chatbot.reset()
+            st.session_state.statement_sentiments = []
+            st.session_state.statement_emotions = []
+            st.session_state.sentiment_result = None
+            
+            # Load messages
+            for msg in scenario['messages']:
+                st.session_state.conversation.add_message(msg['role'], msg['content'])
+                
+                # If it's a user message, run analysis for real-time stats
+                if msg['role'] == 'user':
+                    if st.session_state.show_real_time:
+                        sentiment = st.session_state.sentiment_analyzer.analyze_statement(msg['content'])
+                        st.session_state.statement_sentiments.append(sentiment)
+                        
+                        if st.session_state.analysis_mode == 'emotion':
+                            emotion = st.session_state.sentiment_analyzer.analyze_emotion(msg['content'])
+                            st.session_state.statement_emotions.append(emotion)
+            
+            st.success(f"Loaded scenario: {selected_scenario}")
+            st.rerun()
+
         st.markdown("---")
         
         if st.button("🗑️ Clear Conversation", width='stretch'):
@@ -432,6 +466,13 @@ def main():
                     if 'emotion' in moment:
                         st.markdown(f"- Emotion: {moment['emotion']} (confidence: {moment['emotion_confidence']:.0%})")
                     st.markdown("---")
+        
+        # AI Summary & Suggestions
+        if st.button("✨ Generate AI Summary & Suggestions", type="primary"):
+            with st.spinner("Generating insights with Gemini..."):
+                ai_summary = summarizer.generate_ai_summary(conversation_history)
+                st.markdown("### 🤖 AI Insights")
+                st.markdown(ai_summary)
         
         # Export functionality
         st.markdown("---")
